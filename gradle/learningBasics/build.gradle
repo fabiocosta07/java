@@ -1,0 +1,127 @@
+
+//hello world
+tasks.register('hello') {
+    doLast {
+        println('Hello world')
+    }
+}
+
+// build scripts are code
+tasks.register('upper') {
+    doLast {
+        String someString = 'blabla'
+        println "Original: $someString"
+        println "upper case: ${someString.toUpperCase()}"
+    }
+}
+ 
+tasks.register('count') {
+    doLast {
+        4.times { print "$it "}
+    }
+}
+
+// task dependencies
+tasks.register('intro') {
+    dependsOn tasks.hello
+    doLast {
+        println "I'm Gradle"
+    }
+}
+
+//Flexible task registration
+4.times {
+    counter -> 
+    tasks.register("task$counter") {
+        doLast {
+            println "Im a task number $counter"
+        }
+    }
+}
+
+//manipulating existing tasks
+tasks.named('task0') { dependsOn('task2','task3') }
+
+//add behavior to existing task
+tasks.register('hello2') {
+    doLast {
+        println 'Hello Earth'
+    }
+}
+tasks.named('hello2') {
+    doFirst {
+        println 'Hello Venus'
+    }
+}
+tasks.named('hello2') {
+    doLast {
+        println 'Hello Mars'
+    }
+}
+tasks.named('hello2') {
+    doLast {
+        println 'Hello Jupiter'
+    }
+}
+
+// using ant tasks
+tasks.register('loadfile') {
+    doLast {
+        def files = file('./loadFiles').listFiles().sort()
+        files.each { File file ->
+            if (file.isFile()) {
+                ant.loadfile(srcFile: file, property: file.name)
+                println " *** $file.name ***"
+                println "${ant.properties[file.name]}"
+            }
+        }
+    }
+}
+
+//using methods
+tasks.register('checksum'){
+    doLast {
+        fileList('./loadFiles').each {
+            File file -> 
+            ant.checksum(file: file, property: "cs_$file.name")
+            println "$file.name Checksum: ${ant.properties["cs_$file.name"]}"
+        }
+    }
+}
+
+File[] fileList(String dir){
+    file(dir).listFiles({file -> file.isFile()} as FileFilter).sort()
+}
+
+
+// Default tasks
+defaultTasks 'clean', 'run'
+
+tasks.register('clean'){
+    doLast {
+        println "Default cleaning"
+    }
+}
+
+// A build script with external dependencies
+tasks.register('run'){
+    doLast {
+        println "Default running"
+    }
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'commons-codec', name: 'commons-codec', version: '1.2'
+    }
+}
+
+tasks.register('encode') {
+    doLast {
+        def byte[] encodedString = new Base64().getEncoder().encode('hello world\n'.getBytes())
+        println new String(encodedString)
+    }
+}
